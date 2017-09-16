@@ -1,6 +1,7 @@
 package com.coolweather.android.util;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -15,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.coolweather.android.R;
+import com.coolweather.android.WeatherAcyivity;
 import com.coolweather.android.database.City;
 import com.coolweather.android.database.County;
 import com.coolweather.android.database.Province;
@@ -83,6 +85,14 @@ public class ChooseAreaFragment extends Fragment {
             }else if (currentLevel == LEVEL_CITY) {
                 selectedCity = cityList.get(position);
                 queryCounties();
+            }else if(currentLevel ==LEVEL_COUNTY){
+                County county = countyList.get(position);
+                LogUtil.e("qwertyuio",county.getId()+" "+county.getCityId()+" "+county.getCountyName()+" "+county.getWeatherId());
+                String weatherOfCity = countyList.get(position).getCountyName();
+                Intent intent = new Intent(getActivity(), WeatherAcyivity.class);
+                intent.putExtra("weatherOfCity",weatherOfCity);
+                startActivity(intent);
+                getActivity().finish();
             }
         });
         backButton.setOnClickListener((View v)->{
@@ -100,7 +110,7 @@ public class ChooseAreaFragment extends Fragment {
 
     private void queryProvinces() {
         LogUtil.w(TAG,"queryProvinces");
-        titleText.setText("中国");
+        titleText.setText("China");
         backButton.setVisibility(View.GONE);
         provinceList = DataSupport.findAll(Province.class);
         if (provinceList.size()>0){
@@ -176,7 +186,7 @@ public class ChooseAreaFragment extends Fragment {
             public void onFailure(Call call, IOException e) {
                 getActivity().runOnUiThread(()->{
                     closeProgressDialog();
-                    Toast.makeText(MyApplication.getContext(),"加载失败",Toast.LENGTH_LONG).show();
+                    Toast.makeText(MyApplication.getContext(),"loading fail",Toast.LENGTH_LONG).show();
                 });
             }
 
@@ -214,7 +224,7 @@ public class ChooseAreaFragment extends Fragment {
         LogUtil.w(TAG,"showProgressDialog");
         if(progressDialog==null){
             progressDialog = new ProgressDialog(getActivity());
-            progressDialog.setMessage("正在加载...");
+            progressDialog.setMessage("loading...");
             progressDialog.setCanceledOnTouchOutside(false);
         }
         progressDialog.show();

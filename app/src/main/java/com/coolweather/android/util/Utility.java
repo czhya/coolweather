@@ -1,10 +1,13 @@
 package com.coolweather.android.util;
 
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.coolweather.android.database.City;
 import com.coolweather.android.database.County;
 import com.coolweather.android.database.Province;
+import com.coolweather.android.gson.Weather;
+import com.google.gson.Gson;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -65,7 +68,7 @@ public class Utility {
                     JSONObject countyObject = allcounties.getJSONObject(i);
                     County county = new County();
                     county.setCountyName(countyObject.getString("name"));
-                    county.setCountyCode(countyObject.getInt("id"));
+                    county.setWeatherId(countyObject.getString("id"));
                     county.setCityId(cityId);
                     county.save();
 
@@ -76,6 +79,25 @@ public class Utility {
             }
         }
         return false;
+    }
+
+    /*
+    将返回的JSON数据解析成weather实体类
+     */
+    public static Weather handleWeatherResponse(String response) {
+        LogUtil.e("gg",response);
+        try {
+            JSONObject jsonObject = new JSONObject(response);
+            JSONArray jsonArray = jsonObject.getJSONArray("HeWeather");
+            String weatherContent = jsonArray.getJSONObject(0).toString();
+            Weather weather = new Gson().fromJson(weatherContent, Weather.class);
+            LogUtil.e("hya",weather.status);
+            return weather;
+        } catch (JSONException e) {
+            LogUtil.e("hyaee",e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }
