@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="15dp"
         android:layout_marginTop="15dp"
-        android:text="生活建议"
+        android:text="生活建议:"
         android:textColor="#FFF"
         android:textSize="20sp" />
 
@@ -20,6 +20,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="15dp"
+        android:text="舒适度:"
         android:textColor="#FFF" />
 
     <TextView
@@ -27,12 +28,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="15dp"
+        android:text="洗车指数:"
         android:textColor="#FFF" />
 
     <TextView
         android:id="@+id/tv_sport"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="运动指数:"
         android:layout_margin="15dp"
         android:textColor="#FFF" />
 

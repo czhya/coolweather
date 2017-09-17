@@ -3,13 +3,17 @@ package com.coolweather.android.database;
 import org.litepal.crud.DataSupport;
 
 /**
- * Created by 洪裕安 on 2017/9/16.
+ * Created by 洪裕安 on 2017/9/15.
  */
 
 public class City extends DataSupport {
+
     private int id;
+
     private String cityName;
+
     private int cityCode;
+
     private int provinceId;
 
     public int getId() {
@@ -43,4 +47,5 @@ public class City extends DataSupport {
     public void setProvinceId(int provinceId) {
         this.provinceId = provinceId;
     }
+
 }
