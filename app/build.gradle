@@ -12,8 +12,8 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         jackOptions.enabled = true
     }
-    android {compileOptions.encoding = "utf8"}
     compileOptions{
+        encoding "UTF-8"
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }

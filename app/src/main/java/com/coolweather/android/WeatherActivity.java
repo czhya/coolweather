@@ -35,7 +35,27 @@ import okhttp3.Response;
 
 public class WeatherActivity extends AppCompatActivity {
 
-    final static String FAILMSG = "Ëé∑ÂèñÂ§©Ê∞î‰ø°ÊÅØÂ§±Ë¥•";
+    final static String SUNNY100 = "«Á";
+    final static String CLOUDY101 = "∂‡‘∆";
+    final static String FEWCLOUDS102 = "…Ÿ‘∆";
+    final static String PARTLYCLOUDY103 = "«Áº‰∂‡‘∆";
+    final static String OVERCAST104 = "“ı";
+    final static String SHOWERRAIN300 = "’Û”Í";
+    final static String HEAVYSHOWER_RAIN301 = "«ø’Û”Í";
+    final static String THUNDERSHOWER_RAIN302 = "¿◊’Û”Í";
+    final static String LIGHT_RAIN305 = "–°”Í";
+    final static String MODERATE_RAIN306 = "÷–”Í";
+    final static String HEAVY_RAIN307 = "¥Û”Í";
+    final static String STORM_RAIN310 = "±©”Í";
+    final static String HEAVYSTORM_RAIN311 = "¥Û±©”Í";
+    final static String SEVERESTORM_RAIN312 = "Ãÿ¥Û±©”Í";
+    final static String LIGHT_SNOW400 = "–°—©";
+    final static String MODERATE_SNOW401 = "÷–—©";
+    final static String HEAVY_SNOW402 = "¥Û—©";
+    final static String STORM_SNOW403 = "±©—©";
+    final static String SLEET404 = "”Íº–—©";
+    final static String RAINANDSNOW405 = "”Í—©ÃÏ∆¯";
+
 
     public DrawerLayout drawerLayout;
 
@@ -84,12 +104,12 @@ public class WeatherActivity extends AppCompatActivity {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String weatherString = prefs.getString("weather", null);
         if (weatherString != null) {
-            // ÊúâÁºìÂ≠òÊó∂Áõ¥Êé•Ëß£ÊûêÂ§©Ê∞îÊï∞ÊçÆ
+            // ”–ª∫¥Ê ±÷±Ω”Ω‚ŒˆÃÏ∆¯ ˝æ›
             Weather weather = Utility.handleWeatherResponse(weatherString);
             mWeatherId = weather.basic.weatherId;
             showWeatherInfo(weather);
         } else {
-            // Êó†ÁºìÂ≠òÊó∂ÂéªÊúçÂä°Âô®Êü•ËØ¢Â§©Ê∞î
+            // Œﬁª∫¥Ê ±»•∑˛ŒÒ∆˜≤È—ØÃÏ∆¯
             mWeatherId = getIntent().getStringExtra("weather_id");
             weatherLayout.setVisibility(View.INVISIBLE);
             requestWeather(mWeatherId);
@@ -110,7 +130,7 @@ public class WeatherActivity extends AppCompatActivity {
         }
     }
 
-    // ÂàùÂßãÂåñÂêÑÊéß‰ª∂
+    // ≥ı ºªØ∏˜øÿº˛
     void init() {
         bingPicImg = (ImageView) findViewById(R.id.image_bing_pic_img);
         weatherLayout = (ScrollView) findViewById(R.id.scrollView_weather);
@@ -131,7 +151,7 @@ public class WeatherActivity extends AppCompatActivity {
     }
 
     /**
-     * Ê†πÊçÆÂ§©Ê∞îidËØ∑Ê±ÇÂüéÂ∏ÇÂ§©Ê∞î‰ø°ÊÅØ„ÄÇ
+     * ∏˘æ›ÃÏ∆¯id«Î«Û≥« –ÃÏ∆¯–≈œ¢°£
      */
     public void requestWeather(final String weatherId) {
         LogUtil.e("requestWeather", weatherId);
@@ -171,7 +191,7 @@ public class WeatherActivity extends AppCompatActivity {
     }
 
     /**
-     * Âä†ËΩΩÂøÖÂ∫îÊØèÊó•‰∏ÄÂõæ
+     * º”‘ÿ±ÿ”¶√ø»’“ªÕº
      */
     private void loadBingPic() {
         String requestBingPic = "http://guolin.tech/api/bing_pic";
@@ -196,7 +216,7 @@ public class WeatherActivity extends AppCompatActivity {
     }
 
     /**
-     * Â§ÑÁêÜÂπ∂Â±ïÁ§∫WeatherÂÆû‰ΩìÁ±ª‰∏≠ÁöÑÊï∞ÊçÆ„ÄÇ
+     * ¥¶¿Ì≤¢’π æWeather µÃÂ¿‡÷–µƒ ˝æ›°£
      */
     private void showWeatherInfo(Weather weather) {
         String cityName = weather.basic.cityName;
@@ -211,13 +231,81 @@ public class WeatherActivity extends AppCompatActivity {
         for (Forecast forecast : weather.forecastList) {
             View view = LayoutInflater.from(this).inflate(R.layout.forecast_item, forecastLayout, false);
             TextView dateText = (TextView) view.findViewById(R.id.tv_data);
+            ImageView infoImage = (ImageView) view.findViewById(R.id.image_info);
             TextView infoText = (TextView) view.findViewById(R.id.tv_info);
             TextView maxText = (TextView) view.findViewById(R.id.tv_max);
             TextView minText = (TextView) view.findViewById(R.id.tv_min);
             dateText.setText(forecast.date);
-            infoText.setText(forecast.more.info);
             maxText.setText(forecast.temperature.max);
             minText.setText(forecast.temperature.min);
+            infoText.setText(forecast.more.info);
+            LogUtil.e("infotext",forecast.more.info.toString()+" "+forecast.more.info.toString().equals("«Á")+" "+SUNNY100);
+            switch (forecast.more.info) {
+                case SUNNY100:
+                    infoImage.setImageResource(R.drawable.s100);
+                    break;
+                case CLOUDY101:
+                    infoImage.setImageResource(R.drawable.s101);
+                    break;
+                case FEWCLOUDS102:
+                    infoImage.setImageResource(R.drawable.s102);
+                    break;
+                case PARTLYCLOUDY103:
+                    infoImage.setImageResource(R.drawable.s103);
+                    break;
+                case OVERCAST104:
+                    infoImage.setImageResource(R.drawable.s104);
+                    break;
+                case SHOWERRAIN300:
+                    infoImage.setImageResource(R.drawable.s300);
+                    break;
+                case HEAVYSHOWER_RAIN301:
+                    infoImage.setImageResource(R.drawable.s301);
+                    break;
+                case THUNDERSHOWER_RAIN302:
+                    infoImage.setImageResource(R.drawable.s302);
+                    break;
+                case LIGHT_RAIN305:
+                    infoImage.setImageResource(R.drawable.s305);
+                    break;
+                case MODERATE_RAIN306:
+                    infoImage.setImageResource(R.drawable.s306);
+                    break;
+                case HEAVY_RAIN307:
+                    infoImage.setImageResource(R.drawable.s307);
+                    break;
+                case STORM_RAIN310:
+                    infoImage.setImageResource(R.drawable.s310);
+                    break;
+                case HEAVYSTORM_RAIN311:
+                    infoImage.setImageResource(R.drawable.s311);
+                    break;
+                case SEVERESTORM_RAIN312:
+                    infoImage.setImageResource(R.drawable.s312);
+                    break;
+                case LIGHT_SNOW400:
+                    infoImage.setImageResource(R.drawable.s400);
+                    break;
+                case MODERATE_SNOW401:
+                    infoImage.setImageResource(R.drawable.s401);
+                    break;
+                case HEAVY_SNOW402:
+                    infoImage.setImageResource(R.drawable.s402);
+                    break;
+                case STORM_SNOW403:
+                    infoImage.setImageResource(R.drawable.s403);
+                    break;
+                case SLEET404:
+                    infoImage.setImageResource(R.drawable.s404);
+                    break;
+                case RAINANDSNOW405:
+                    infoImage.setImageResource(R.drawable.s405);
+                    break;
+                default:
+                    break;
+            }
+
+
             forecastLayout.addView(view);
         }
         if (weather.aqi != null) {
