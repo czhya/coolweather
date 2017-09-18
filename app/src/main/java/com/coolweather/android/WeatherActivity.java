@@ -1,11 +1,16 @@
 package com.coolweather.android;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -19,6 +24,10 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.baidu.location.BDLocation;
+import com.baidu.location.BDLocationListener;
+import com.baidu.location.LocationClient;
+import com.baidu.location.LocationClientOption;
 import com.bumptech.glide.Glide;
 import com.coolweather.android.gson.Forecast;
 import com.coolweather.android.gson.Weather;
@@ -28,6 +37,8 @@ import com.coolweather.android.util.LogUtil;
 import com.coolweather.android.util.Utility;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -87,7 +98,10 @@ public class WeatherActivity extends AppCompatActivity {
 
     private ImageView bingPicImg;
 
-    private String mWeatherId;
+    private static String mWeatherId;
+
+    private LocationClient client;
+    private static String address;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,37 +112,135 @@ public class WeatherActivity extends AppCompatActivity {
                     | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
             getWindow().setStatusBarColor(Color.TRANSPARENT);
         }
+        client = new LocationClient(getApplicationContext());
+        client.registerLocationListener(new LocationUtil());
         setContentView(R.layout.activity_weather);
+        if (permission()) {
+            requestLocation();
+        }
         init();
-
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String weatherString = prefs.getString("weather", null);
+        mWeatherId = address;
+        Weather weather;
+
         if (weatherString != null) {
             // 有缓存时直接解析天气数据
-            Weather weather = Utility.handleWeatherResponse(weatherString);
-            mWeatherId = weather.basic.weatherId;
-            showWeatherInfo(weather);
+            weather = Utility.handleWeatherResponse(weatherString);
+            LogUtil.e("Weather", "" + weather.basic.cityName.equals(mWeatherId) + "  " + mWeatherId + "  " + weather.basic.cityName);
+            if (!weather.basic.cityName.equals(mWeatherId) && mWeatherId != null) {
+                weatherLayout.setVisibility(View.INVISIBLE);
+                requestWeather(mWeatherId);
+            } else {
+                showWeatherInfo(weather);
+            }
         } else {
             // 无缓存时去服务器查询天气
-            mWeatherId = getIntent().getStringExtra("weather_id");
             weatherLayout.setVisibility(View.INVISIBLE);
             requestWeather(mWeatherId);
         }
+
+
         swipeRefresh.setOnRefreshListener(() -> {
-
+            SharedPreferences prefs2 = PreferenceManager.getDefaultSharedPreferences(this);
+            String weatherString2 = prefs2.getString("weather", null);
+            mWeatherId = Utility.handleWeatherResponse(weatherString2).basic.weatherId;
             requestWeather(mWeatherId);
-
         });
         navButton.setOnClickListener((View v) -> {
             drawerLayout.openDrawer(GravityCompat.START);
         });
+
         String bingPic = prefs.getString("bing_pic", null);
         if (bingPic != null) {
             Glide.with(this).load(bingPic).into(bingPicImg);
         } else {
             loadBingPic();
         }
+
     }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (permission()) {
+            requestLocation();
+        }
+    }
+
+    private boolean permission() {
+        boolean permission = false;
+        List<String> permissionList = new ArrayList<>();
+        if (ContextCompat.checkSelfPermission(WeatherActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            permissionList.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+        if (ContextCompat.checkSelfPermission(WeatherActivity.this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+            permissionList.add(Manifest.permission.READ_PHONE_STATE);
+        }
+        if (ContextCompat.checkSelfPermission(WeatherActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            permissionList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+
+        if (!permissionList.isEmpty()) {
+            String[] permissions = permissionList.toArray(new String[permissionList.size()]);
+            ActivityCompat.requestPermissions(WeatherActivity.this, permissions, 1);
+        } else {
+            LogUtil.e("Weather", "permission");
+            permission = true;
+//            requestLocation();
+        }
+        return permission;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        LogUtil.e("MainActivity", "onRequestPermissionsResult");
+        boolean state = true;
+        switch (requestCode) {
+            case 1:
+                if (grantResults.length > 0) {
+                    for (int result : grantResults) {
+                        if (result != PackageManager.PERMISSION_GRANTED) {
+                            state = false;
+                            Toast.makeText(this, "必须同意所有权限才能获得更好的服务", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                } else {
+                    Toast.makeText(this, "发生未知错误", Toast.LENGTH_LONG).show();
+                    finish();
+                }
+                if (state) {
+                    requestLocation();
+                }
+                break;
+        }
+    }
+
+    private void requestLocation() {
+        LogUtil.e("Weather", "requestLocation");
+        initLocation();
+        client.start();
+    }
+
+    private void initLocation() {
+        LogUtil.e("Weather", "initLocation");
+        LocationClientOption option = new LocationClientOption();
+        option.setScanSpan(50);
+        option.setIsNeedAddress(true);
+        client.setLocOption(option);
+    }
+
+
+    class LocationUtil implements BDLocationListener {
+        @Override
+        public void onReceiveLocation(final BDLocation bdLocation) {
+//            runOnUiThread(() -> {
+            String weatherId = bdLocation.getDistrict();
+            address = weatherId;
+//            });
+        }
+    }
+
 
     // 初始化各控件
     void init() {
@@ -239,7 +351,7 @@ public class WeatherActivity extends AppCompatActivity {
             maxText.setText(forecast.temperature.max);
             minText.setText(forecast.temperature.min);
             infoText.setText(forecast.more.info);
-            LogUtil.e("infotext",forecast.more.info.toString()+" "+forecast.more.info.toString().equals("晴")+" "+SUNNY100);
+            LogUtil.e("infotext", forecast.more.info.toString() + " " + forecast.more.info.toString().equals("晴") + " " + SUNNY100);
             switch (forecast.more.info) {
                 case SUNNY100:
                     infoImage.setImageResource(R.drawable.s100);

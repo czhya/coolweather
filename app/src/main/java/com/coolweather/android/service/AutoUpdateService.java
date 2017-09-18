@@ -8,6 +8,8 @@ import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+
+import com.baidu.location.LocationClient;
 import com.coolweather.android.gson.Weather;
 import com.coolweather.android.util.HttpUtil;
 import com.coolweather.android.util.Utility;
@@ -30,7 +32,7 @@ public class AutoUpdateService extends Service {
         updateWeather();
         updateBingPic();
         AlarmManager manager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        int anHour = 8 * 60 * 60 * 1000; // 这是8小时的毫秒数
+        int anHour = 4 * 60 * 60 * 1000; // 这是8小时的毫秒数
         long triggerAtTime = SystemClock.elapsedRealtime() + anHour;
         Intent i = new Intent(this, AutoUpdateService.class);
         PendingIntent pi = PendingIntent.getService(this, 0, i, 0);
@@ -42,14 +44,14 @@ public class AutoUpdateService extends Service {
     /**
      * 更新天气信息。
      */
-    private void updateWeather(){
+    private void updateWeather() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String weatherString = prefs.getString("weather", null);
         if (weatherString != null) {
             // 有缓存时直接解析天气数据
             Weather weather = Utility.handleWeatherResponse(weatherString);
             String weatherId = weather.basic.weatherId;
-            String weatherUrl = "http://guolin.tech/api/weather?cityid=" + weatherId + "&key=bc0418b57b2d4918819d3974ac1285d9";
+            String weatherUrl = "http://guolin.tech/api/weather?cityid=" + weatherId + "&key=4a6a5dd530cf4ea1bbde66c0ee0d5eec";
             HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
@@ -90,5 +92,8 @@ public class AutoUpdateService extends Service {
             }
         });
     }
+
+    public LocationClient client;
+
 
 }

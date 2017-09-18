@@ -2,6 +2,7 @@
 <project version="4">
   <component name="Encoding" native2AsciiForPropertiesFiles="true" defaultCharsetForPropertiesFiles="UTF-8">
     <file url="file://$PROJECT_DIR$/app/build.gradle" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/app/src/main/java/com/coolweather/android/ChooseAreaFragment.java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/app/src/main/java/com/coolweather/android/WeatherActivity.java" charset="GBK" />
     <file url="PROJECT" charset="UTF-8" />
   </component>
