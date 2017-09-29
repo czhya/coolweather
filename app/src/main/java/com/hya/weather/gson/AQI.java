@@ -1,4 +1,4 @@
-package com.coolweather.android.gson;
+package com.hya.weather.gson;
 
 /**
  * Created by 洪裕安 on 2017/9/16.

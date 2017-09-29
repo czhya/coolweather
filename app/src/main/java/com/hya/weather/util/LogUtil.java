@@ -1,4 +1,4 @@
-package com.coolweather.android.util;
+package com.hya.weather.util;
 
 import android.util.Log;
 
@@ -13,7 +13,7 @@ public class LogUtil {
     public static final int WARN = 4;
     public static final int ERROR = 5;
     public static final int NOTHING = 6;
-    public static int level = VERBOSE;
+    public static int level = NOTHING;
 
     public static void v(String tag, String msg) {
         if(level<=VERBOSE){

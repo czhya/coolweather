@@ -1,4 +1,4 @@
-package com.coolweather.android;
+package com.hya.weather;
 
 import android.Manifest;
 import android.content.Intent;
@@ -7,6 +7,8 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -24,17 +26,17 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.baidu.location.BDLocation;
-import com.baidu.location.BDLocationListener;
-import com.baidu.location.LocationClient;
-import com.baidu.location.LocationClientOption;
+import com.amap.api.location.AMapLocation;
+import com.amap.api.location.AMapLocationClient;
+import com.amap.api.location.AMapLocationClientOption;
+import com.amap.api.location.AMapLocationListener;
 import com.bumptech.glide.Glide;
-import com.coolweather.android.gson.Forecast;
-import com.coolweather.android.gson.Weather;
-import com.coolweather.android.service.AutoUpdateService;
-import com.coolweather.android.util.HttpUtil;
-import com.coolweather.android.util.LogUtil;
-import com.coolweather.android.util.Utility;
+import com.hya.weather.gson.Forecast;
+import com.hya.weather.gson.Weather;
+import com.hya.weather.service.AutoUpdateService;
+import com.hya.weather.util.HttpUtil;
+import com.hya.weather.util.LogUtil;
+import com.hya.weather.util.Utility;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -100,8 +102,45 @@ public class WeatherActivity extends AppCompatActivity {
 
     private static String mWeatherId;
 
-    private LocationClient client;
-    private static String address;
+    private Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            Bundle bundle = msg.getData();
+            mWeatherId = bundle.getString("address");
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            String weatherString = prefs.getString("weather", null);
+            if (weatherString != null) {
+                // 有缓存时直接解析天气数据
+                Weather weather = Utility.handleWeatherResponse(weatherString);
+                LogUtil.e("Weather", "" + weather.basic.cityName.equals(mWeatherId) + "  " + mWeatherId + "  " + weather.basic.cityName);
+                if (!weather.basic.cityName.equals(mWeatherId) && mWeatherId != null) {
+                    weatherLayout.setVisibility(View.INVISIBLE);
+                    requestWeather(mWeatherId);
+                } else {
+                    showWeatherInfo(weather);
+                }
+            } else {
+                // 无缓存时去服务器查询天气
+                weatherLayout.setVisibility(View.INVISIBLE);
+                requestWeather(mWeatherId);
+            }
+        }
+    };
+
+
+    //声明AMapLocationClient类对象
+    public AMapLocationClient mLocationClient = null;
+    //声明定位回调监听器
+    public AMapLocationListener mLocationListener = (AMapLocation aMapLocation) -> {
+        Bundle bundle = new Bundle();
+        bundle.putString("address", aMapLocation.getDistrict());
+        Message message = new Message();
+        message.setData(bundle);
+        handler.sendMessage(message);
+
+    };
+    //声明AMapLocationClientOption对象
+    public AMapLocationClientOption mLocationOption = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,38 +151,19 @@ public class WeatherActivity extends AppCompatActivity {
                     | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
             getWindow().setStatusBarColor(Color.TRANSPARENT);
         }
-        client = new LocationClient(getApplicationContext());
-        client.registerLocationListener(new LocationUtil());
+
         setContentView(R.layout.activity_weather);
         if (permission()) {
             requestLocation();
         }
         init();
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String weatherString = prefs.getString("weather", null);
-        mWeatherId = address;
-        Weather weather;
 
-        if (weatherString != null) {
-            // 有缓存时直接解析天气数据
-            weather = Utility.handleWeatherResponse(weatherString);
-            LogUtil.e("Weather", "" + weather.basic.cityName.equals(mWeatherId) + "  " + mWeatherId + "  " + weather.basic.cityName);
-            if (!weather.basic.cityName.equals(mWeatherId) && mWeatherId != null) {
-                weatherLayout.setVisibility(View.INVISIBLE);
-                requestWeather(mWeatherId);
-            } else {
-                showWeatherInfo(weather);
-            }
-        } else {
-            // 无缓存时去服务器查询天气
-            weatherLayout.setVisibility(View.INVISIBLE);
-            requestWeather(mWeatherId);
-        }
 
+        SharedPreferences prefs2 = PreferenceManager.getDefaultSharedPreferences(this);
+        String weatherString2 = prefs2.getString("weather", null);
 
         swipeRefresh.setOnRefreshListener(() -> {
-            SharedPreferences prefs2 = PreferenceManager.getDefaultSharedPreferences(this);
-            String weatherString2 = prefs2.getString("weather", null);
+
             mWeatherId = Utility.handleWeatherResponse(weatherString2).basic.weatherId;
             requestWeather(mWeatherId);
         });
@@ -151,7 +171,7 @@ public class WeatherActivity extends AppCompatActivity {
             drawerLayout.openDrawer(GravityCompat.START);
         });
 
-        String bingPic = prefs.getString("bing_pic", null);
+        String bingPic = prefs2.getString("bing_pic", null);
         if (bingPic != null) {
             Glide.with(this).load(bingPic).into(bingPicImg);
         } else {
@@ -216,29 +236,21 @@ public class WeatherActivity extends AppCompatActivity {
         }
     }
 
-    private void requestLocation() {
-        LogUtil.e("Weather", "requestLocation");
-        initLocation();
-        client.start();
-    }
 
-    private void initLocation() {
-        LogUtil.e("Weather", "initLocation");
-        LocationClientOption option = new LocationClientOption();
-        option.setScanSpan(50);
-        option.setIsNeedAddress(true);
-        client.setLocOption(option);
-    }
+    public void requestLocation() {
+        //初始化定位
+        mLocationClient = new AMapLocationClient(getApplicationContext());
+        //设置定位回调监听
+        mLocationClient.setLocationListener(mLocationListener);
+        //初始化AMapLocationClientOption对象
+        mLocationOption = new AMapLocationClientOption();
+        //设置定位间隔,单位毫秒,默认为2000ms，最低1000ms。
+        mLocationOption.setInterval(1000*60*60);
+        //设置是否返回地址信息（默认返回地址信息）
+        mLocationOption.setNeedAddress(true);
+        mLocationClient.setLocationOption(mLocationOption);
+        mLocationClient.startLocation();
 
-
-    class LocationUtil implements BDLocationListener {
-        @Override
-        public void onReceiveLocation(final BDLocation bdLocation) {
-//            runOnUiThread(() -> {
-            String weatherId = bdLocation.getDistrict();
-            address = weatherId;
-//            });
-        }
     }
 
 

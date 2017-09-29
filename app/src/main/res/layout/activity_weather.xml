@@ -52,7 +52,7 @@
 
         <fragment
             android:id="@+id/fragment_choose_area"
-            android:name="com.coolweather.android.ChooseAreaFragment"
+            android:name="com.hya.weather.ChooseAreaFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="start" />

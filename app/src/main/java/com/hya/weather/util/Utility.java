@@ -1,12 +1,12 @@
-package com.coolweather.android.util;
+package com.hya.weather.util;
 
 import android.text.TextUtils;
 
-import com.coolweather.android.database.City;
-import com.coolweather.android.database.County;
-import com.coolweather.android.database.Province;
-import com.coolweather.android.gson.Weather;
 import com.google.gson.Gson;
+import com.hya.weather.database.City;
+import com.hya.weather.database.County;
+import com.hya.weather.database.Province;
+import com.hya.weather.gson.Weather;
 
 import org.json.JSONArray;
 import org.json.JSONException;
